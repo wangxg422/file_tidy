@@ -1,20 +1,37 @@
 pub mod file;
 
-use clap::Subcommand;
+use clap::{Arg, Args, Subcommand};
 use crate::command::file::FileCommand;
 
 #[derive(Subcommand)]
 pub enum Commands {
     #[command(subcommand, about="manage files")]
-    File(FileCommand),
-    Delete { id: u32 },
+    File(FileCommand, FileCommandArgs),
 }
 
-impl Commands {
-    pub fn exec(&self) {
+pub struct FileCommandArgs {
+
+}
+
+impl CommandArgs for FileCommandArgs {}
+
+impl CommandExec for Commands {
+    fn exec(&self, _args: impl CommandArgs) {
         match self {
-            Commands::File(file_cmd) => file_cmd.exec(),
-            Commands::Delete { id } => println!("Deleting {}", id),
+            Commands::File(cmd, args) => cmd.exec(args),
         }
     }
 }
+
+pub trait CommandExec {
+    fn exec(&self, args: impl CommandArgs);
+}
+
+pub trait CommandArgs {
+}
+
+pub struct EmptyArgs {
+
+}
+
+impl CommandArgs for EmptyArgs {}

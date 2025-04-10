@@ -1,5 +1,29 @@
-use std::path::PathBuf;
 use clap::Args;
+use std::path::PathBuf;
+use crate::command::{CommandArgs, CommandExec};
+
+pub struct RenameCommand {}
+
+impl CommandExec for RenameCommand {
+    fn exec(&self, args: &RenameArgs) {
+        if !args.dir.exists() {
+            println!("path does not exist: {}", args.dir.display());
+            return;
+        }
+
+        if args.naming_rule.sha1 {
+
+        } else if args.naming_rule.sha256 {
+
+        } else if args.naming_rule.sha3 {
+
+        } else if args.naming_rule.md5 {
+
+        } else if args.naming_rule.sequence{
+
+        }
+    }
+}
 
 #[derive(Args)]
 pub struct RenameArgs {
@@ -20,6 +44,8 @@ pub struct RenameArgs {
     )]
     pub lower_ext: bool,
 }
+
+impl CommandArgs for RenameArgs {}
 
 #[derive(Args, Debug)]
 #[group(required = true, multiple = false)]
@@ -44,9 +70,11 @@ struct NamingRuleArgs {
     pub sha3: bool,
 }
 
+impl CommandArgs for NamingRuleArgs {}
+
 pub enum NamingRule {
     SHA1,
     SHA256,
     SHA3,
-    SEQUENCE
+    SEQUENCE,
 }

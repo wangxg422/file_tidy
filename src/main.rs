@@ -1,6 +1,6 @@
 mod command;
 
-use crate::command::Commands;
+use crate::command::{CommandExec, Commands, EmptyArgs};
 use clap::Parser;
 
 #[derive(Parser)]
@@ -29,5 +29,5 @@ fn main() {
         println!("Verbose mode enabled");
     }
 
-    cli.command.exec();
+    cli.command.exec(EmptyArgs{});
 }
