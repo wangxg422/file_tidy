@@ -1,0 +1,11 @@
+/target
+**/target
+
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+
+logs
+*.log
