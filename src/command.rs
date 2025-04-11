@@ -8,7 +8,6 @@ pub enum Commands {
     #[command(subcommand, about="manage files")]
     File {
         cmd: FileCommand,
-        args: FileCommandArgs
     },
 }
 
@@ -19,15 +18,15 @@ pub struct FileCommandArgs {
 impl CommandArgs for FileCommandArgs {}
 
 impl CommandExec for Commands {
-    fn exec(&self, _args: impl CommandArgs) {
+    fn exec(&self, _args: Option<&impl CommandArgs>) {
         match self {
-            Commands::File { cmd, args} => cmd.exec(args),
+            Commands::File { cmd} => cmd.exec(None),
         }
     }
 }
 
 pub trait CommandExec {
-    fn exec(&self, args: &impl CommandArgs);
+    fn exec(&self, args: Option<&impl CommandArgs>);
 }
 
 pub trait CommandArgs {

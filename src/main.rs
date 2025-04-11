@@ -30,5 +30,5 @@ fn main() {
         println!("Verbose mode enabled");
     }
 
-    cli.command.exec(EmptyArgs{});
+    cli.command.exec(None);
 }

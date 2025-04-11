@@ -22,7 +22,7 @@ pub enum FileCommand {
 }
 
 impl CommandExec for FileCommand {
-    fn exec(&self, _args: &FileCommandArgs) {
+    fn exec(&self, _args: Option<&impl CommandArgs>) {
         match self {
             FileCommand::Duplicates {cmd, args} => cmd.exec(args),
             FileCommand::Rename {cmd, args} => cmd.exec(args)

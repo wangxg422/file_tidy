@@ -11,7 +11,7 @@ use crate::error::Error;
 pub struct DupCommand {}
 
 impl CommandExec for DupCommand {
-    fn exec(&self, args: &DupArgs) {
+    fn exec(&self, args: Option<&impl CommandArgs>) {
         let mut hashes: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
 
         for entry in WalkDir::new(&args.dir) {

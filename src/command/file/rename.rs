@@ -5,7 +5,7 @@ use crate::command::{CommandArgs, CommandExec};
 pub struct RenameCommand {}
 
 impl CommandExec for RenameCommand {
-    fn exec(&self, args: &RenameArgs) {
+    fn exec(&self, args: Option<&impl CommandArgs>) {
         if !args.dir.exists() {
             println!("path does not exist: {}", args.dir.display());
             return;
