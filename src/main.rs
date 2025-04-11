@@ -1,4 +1,5 @@
 mod command;
+mod error;
 
 use crate::command::{CommandExec, Commands, EmptyArgs};
 use clap::Parser;
