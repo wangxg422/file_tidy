@@ -1,5 +1,6 @@
 mod command;
 mod error;
+mod handle;
 
 use crate::command::Commands;
 use clap::Parser;
