@@ -2,7 +2,6 @@ mod rename;
 mod dup;
 
 use clap::{Args, Subcommand};
-use crate::command::{CommandArgs, CommandExec, FileCommandArgs};
 use crate::command::file::dup::{DupArgs, DupCommand};
 use crate::command::file::rename::{RenameArgs, RenameCommand};
 
@@ -21,11 +20,11 @@ pub enum FileCommand {
     },
 }
 
-impl CommandExec for FileCommand {
-    fn exec(&self, _args: Option<&impl CommandArgs>) {
+impl FileCommand {
+    pub fn exec(&self) {
         match self {
-            FileCommand::Duplicates {cmd, args} => cmd.exec(args),
-            FileCommand::Rename {cmd, args} => cmd.exec(args)
+            FileCommand::Duplicates {cmd, args} => cmd.exec(),
+            FileCommand::Rename {cmd, args} => cmd.exec()
         }
     }
 }

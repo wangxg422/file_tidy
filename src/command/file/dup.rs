@@ -11,25 +11,25 @@ use crate::error::Error;
 pub struct DupCommand {}
 
 impl CommandExec for DupCommand {
-    fn exec(&self, args: Option<&impl CommandArgs>) {
-        let mut hashes: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
-
-        for entry in WalkDir::new(&args.dir) {
-            let entry = entry.unwrap();
-            let path = entry.path();
-
-            if path.is_file() {
-                // 计算文件哈希
-                let hash = self.compute_file_hash(path).unwrap();
-
-                // 将文件路径添加到对应哈希的列表中
-                hashes.entry(hash)
-                    .or_insert_with(Vec::new)
-                    .push(path.to_path_buf());
-            }
-        }
-
-        self.print_duplicates(&args.dir, &mut hashes);
+    fn exec(&self) {
+        // let mut hashes: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
+        //
+        // for entry in WalkDir::new(&args.dir) {
+        //     let entry = entry.unwrap();
+        //     let path = entry.path();
+        //
+        //     if path.is_file() {
+        //         // 计算文件哈希
+        //         let hash = self.compute_file_hash(path).unwrap();
+        //
+        //         // 将文件路径添加到对应哈希的列表中
+        //         hashes.entry(hash)
+        //             .or_insert_with(Vec::new)
+        //             .push(path.to_path_buf());
+        //     }
+        // }
+        //
+        // self.print_duplicates(&args.dir, &mut hashes);
     }
 }
 
@@ -80,11 +80,12 @@ impl DupCommand {
     }
 
     fn remove_trailing_slash(&self, path: &str) -> &str {
-        if path.ends_with('/') {
-            &path[..path.len() - 1]
-        } else {
-            path
-        }
+        // if path.ends_with('/') {
+        //     &path[..path.len() - 1]
+        // } else {
+        //     path
+        // }
+        ""
     }
 }
 
