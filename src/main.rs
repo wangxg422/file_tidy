@@ -1,7 +1,7 @@
 mod command;
 mod error;
 
-use crate::command::{CommandExec, Commands, EmptyArgs};
+use crate::command::Commands;
 use clap::Parser;
 
 #[derive(Parser)]
