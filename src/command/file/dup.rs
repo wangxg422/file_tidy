@@ -5,13 +5,12 @@ use std::path::PathBuf;
 use clap::Args;
 use sha3::{Digest, Sha3_256};
 use walkdir::WalkDir;
-use crate::command::{CommandArgs, CommandExec};
 use crate::error::Error;
 
 pub struct DupCommand {}
 
-impl CommandExec for DupCommand {
-    fn exec(&self) {
+impl DupCommand {
+    pub fn exec(&self) {
         // let mut hashes: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
         //
         // for entry in WalkDir::new(&args.dir) {
@@ -97,5 +96,3 @@ pub struct DupArgs {
     #[arg(short, long, help = "where to save the duplicate files, default is ")]
     pub output: String,
 }
-
-impl CommandArgs for DupArgs {}

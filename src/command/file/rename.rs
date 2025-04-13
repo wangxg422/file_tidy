@@ -4,7 +4,7 @@ use std::path::PathBuf;
 pub struct RenameCommand {}
 
 impl RenameCommand {
-    fn exec(&self) {
+    pub fn exec(&self) {
         // if !args.dir.exists() {
         //     println!("path does not exist: {}", args.dir.display());
         //     return;
