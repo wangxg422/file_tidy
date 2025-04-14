@@ -1,6 +1,6 @@
 pub mod file;
 
-use clap::{Arg, Args, Subcommand};
+use clap::{Subcommand};
 use crate::command::file::FileCommand;
 
 #[derive(Subcommand)]

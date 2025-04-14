@@ -1,6 +1,7 @@
-mod command;
-mod error;
-mod handle;
+pub mod command;
+pub mod error;
+pub mod util;
+pub mod enumerate;
 
 use crate::command::Commands;
 use clap::Parser;
