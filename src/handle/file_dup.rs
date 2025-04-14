@@ -24,11 +24,10 @@ pub fn handle(args: &DupArgs) {
         }
     }
 
-    if args.output.is_empty() {
-        save_duplicates_to_file(&args.dir, &mut hashes);
-    } else {
-        print_duplicates(&args.dir, &mut hashes);
-    }
+    match &args.output {
+        Some(output) => save_duplicates_to_file(&args.dir, output, &mut hashes),
+        None => print_duplicates(&args.dir, &mut hashes)
+    };
 }
 
 fn print_duplicates(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
@@ -43,24 +42,22 @@ fn print_duplicates(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>
 
     for (hash, paths) in hashes {
         if paths.len() > 1 {
-            println!("Duplicate files sha3: {}\n", hex::encode(hash));
+            println!("Duplicate files sha3: {}", hex::encode(hash));
             paths.sort();
             for path in paths {
-                println!("    - {}\n", path.display());
+                println!("    - {}", path.display());
             }
-            println!("{}", "\n");
+            print!("\n");
         }
     }
 }
 
-fn save_duplicates_to_file(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
-    let detail = "__duplicates.txt";
-
+fn save_duplicates_to_file(path: &PathBuf, output: &str, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open(detail)
+        .open(output)
         .unwrap();
 
     file.write_all(
@@ -92,6 +89,6 @@ fn save_duplicates_to_file(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<Pa
 
     println!(
         "Duplicate files check finished, please confirm at: {}\n",
-        detail
+        output
     );
 }

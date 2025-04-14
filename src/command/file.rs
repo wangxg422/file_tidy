@@ -22,11 +22,11 @@ impl FileCommand {
 
 #[derive(Args)]
 pub struct DupArgs {
-    #[arg(short, long, help = "path of files")]
+    #[arg(short, long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
-    #[arg(short, long, help = "where to save the duplicate files, default is ")]
-    pub output: String,
+    #[arg(short, long, help = "where to save the duplicate files", required = false)]
+    pub output: Option<String>,
 }
 
 #[derive(Args)]
@@ -42,11 +42,11 @@ pub struct RenameArgs {
     pub upper: bool,
 
     #[arg(
-        long = "lower-ext",
-        help = "lowercase file extension",
+        long = "upper-ext",
+        help = "uppercase file extension",
         required = false
     )]
-    pub lower_ext: bool,
+    pub upper_ext: bool,
 }
 
 #[derive(Args, Debug)]
