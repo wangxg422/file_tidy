@@ -1,14 +1,6 @@
-pub enum NamingRule {
+pub enum FileHashType {
     MD5,
     SHA1,
     SHA256,
     SHA3,
-    SEQUENCE,
 }
-
-// pub enum HashType {
-//     MD5,
-//     SHA1,
-//     SHA256,
-//     SHA3,
-// }

@@ -5,8 +5,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use clap::{Args, Subcommand};
 use walkdir::WalkDir;
-use crate::enumerate::file::NamingRule;
-use crate::enumerate::file::NamingRule::{MD5, SEQUENCE, SHA1, SHA256, SHA3};
+use crate::enumerate::file::{FileHashType};
+use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA256, SHA3};
 use crate::util;
 use crate::util::compute_file_hash;
 
@@ -30,7 +30,7 @@ impl FileCommand {
                     let path = entry.path();
 
                     if path.is_file() {
-                        let hash = util::compute_file_hash(&NamingRule::MD5, path).unwrap();
+                        let hash = util::compute_file_hash(&FileHashType::MD5, path).unwrap();
 
                         hashes.entry(hash)
                             .or_insert_with(Vec::new)
@@ -60,7 +60,7 @@ impl FileCommand {
                 } else if args.naming_rule.sha3 {
                     naming_by = SHA3
                 } else if args.naming_rule.sequence {
-                    naming_by = SEQUENCE
+
                 }
 
                 for entry in WalkDir::new(&args.dir) {

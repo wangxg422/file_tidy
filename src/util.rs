@@ -1,20 +1,20 @@
 use std::fs::File;
 use std::io::Read;
-use sha3::{Sha3_256};
 use md5::{Digest, Md5};
 use sha1::Sha1;
-use crate::enumerate::file::NamingRule;
+use sha2::Sha256;
+use sha3::Sha3_256;
+use crate::enumerate::file::FileHashType;
 use crate::error::Error;
-use crate::error::Error::CustomError;
 
-pub fn compute_file_hash(hash_type: &NamingRule, path: &std::path::Path) -> Result<Vec<u8>, Error> {
+pub fn compute_file_hash(hash_type: &FileHashType, path: &std::path::Path) -> Result<Vec<u8>, Error> {
     let mut file = File::open(path)?;
 
     let hash_result = match hash_type {
-        NamingRule::MD5 => compute_hash(&mut file, Md5::new()),
-        NamingRule::SHA1 => compute_hash(&mut file, Sha1::new()),
-        NamingRule::SHA256 => compute_hash(&mut file, Sha3_256::new()),
-        _ => Err(CustomError("".to_string()))
+        FileHashType::MD5 => compute_hash(&mut file, Md5::new()),
+        FileHashType::SHA1 => compute_hash(&mut file, Sha1::new()),
+        FileHashType::SHA256 => compute_hash(&mut file, Sha256::new()),
+        FileHashType::SHA3 => compute_hash(&mut file, Sha3_256::new()),
     }?;
 
     Ok(hash_result)
