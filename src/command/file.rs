@@ -23,7 +23,7 @@ impl FileCommand {
 #[derive(Args)]
 pub struct DupArgs {
     #[arg(short, long, help = "path of files")]
-    pub dir: String,
+    pub dir: PathBuf,
 
     #[arg(short, long, help = "where to save the duplicate files, default is ")]
     pub output: String,
@@ -38,8 +38,8 @@ pub struct RenameArgs {
     #[command(flatten)]
     pub naming_rule: NamingRuleArgs,
 
-    #[arg(long = "lower", help = "lowercase file name", required = false)]
-    pub lower: bool,
+    #[arg(long = "upper", help = "uppercase file name", required = false)]
+    pub upper: bool,
 
     #[arg(
         long = "lower-ext",

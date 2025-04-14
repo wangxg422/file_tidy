@@ -15,17 +15,19 @@ pub fn exec(args: &DupArgs) {
         let path = entry.path();
 
         if path.is_file() {
-            // 计算文件哈希
             let hash = compute_file_hash(path).unwrap();
 
-            // 将文件路径添加到对应哈希的列表中
             hashes.entry(hash)
                 .or_insert_with(Vec::new)
                 .push(path.to_path_buf());
         }
     }
 
-    print_duplicates(&args.dir, &mut hashes);
+    if args.output {
+        save_duplicates_to_file(&args.dir, &mut hashes);
+    } else {
+        print_duplicates(&args.dir, &mut hashes);
+    }
 }
 
 fn compute_file_hash(path: &std::path::Path) -> Result<Vec<u8>, Error> {
@@ -44,14 +46,34 @@ fn compute_file_hash(path: &std::path::Path) -> Result<Vec<u8>, Error> {
     Ok(hasher.finalize().to_vec())
 }
 
-fn print_duplicates(path: &str, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
-    let detail = format!("{}/{}", remove_trailing_slash(&path), "__duplicate_file.txt");
+fn print_duplicates(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
+    println!("Duplicate files in {}:\n\n", path);
+
+    for files in hashes.values_mut() {
+        files.sort();
+    }
+
+    for (hash, paths) in hashes {
+        if paths.len() > 1 {
+            println!("Duplicate files sha3: {}\n", hex::encode(hash));
+            paths.sort();
+            for path in paths {
+                println!("    - {}\n", path.display());
+            }
+            println!("{}", "\n");
+        }
+    }
+}
+
+fn save_duplicates_to_file(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
+
+    let file= "__duplicates.txt";
 
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open(&detail).unwrap();
+        .open(file).unwrap();
 
     file.write_all(format!("Duplicate files in {}:\n\n", path).as_bytes()).expect("write to file failed");
 
@@ -70,13 +92,5 @@ fn print_duplicates(path: &str, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
         }
     }
 
-    println!("Duplicate files check finished, please confirm at: {}\n", &detail);
-}
-
-fn remove_trailing_slash(path: &str) -> &str {
-    if path.ends_with('/') {
-        &path[..path.len() - 1]
-    } else {
-        path
-    }
+    println!("Duplicate files check finished, please confirm at: {}\n", &file);
 }
