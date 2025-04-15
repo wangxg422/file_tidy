@@ -28,10 +28,24 @@ pub fn handle(args: &RenameArgs) {
         let path = entry.path();
 
         if path.is_file() {
-            let new_name = hex::encode(compute_file_hash(&naming_by, path).unwrap());
+            let hash = compute_file_hash(&naming_by, path).unwrap();
+            let new_name = if args.upper {
+                hex::encode_upper(hash)
+            } else {
+                hex::encode(hash)
+            };
 
             let new_path = match path.extension() {
-                Some(ext) => path.with_file_name(format!("{}.{}", &new_name, ext.to_str().unwrap())),
+                Some(ext) => {
+                    let mut ext_name = ext.to_str().unwrap().to_string();
+                    if args.upper_ext {
+                        ext_name = ext_name.to_ascii_uppercase();
+                    }
+                    if args.low_ext {
+                        ext_name = ext_name.to_ascii_lowercase();
+                    }
+                    path.with_file_name(format!("{}.{}", &new_name, ext_name))
+                },
                 None => path.with_file_name(&new_name)
             };
 

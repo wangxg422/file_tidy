@@ -51,12 +51,22 @@ pub struct RenameArgs {
     #[arg(long = "upper", help = "uppercase file name", required = false)]
     pub upper: bool,
 
+    #[arg(long = "lower", help = "lowercase file name", required = false)]
+    pub lower: bool,
+
     #[arg(
         long = "upper-ext",
         help = "uppercase file extension",
         required = false
     )]
     pub upper_ext: bool,
+
+    #[arg(
+        long = "lower-ext",
+        help = "lowercase file extension",
+        required = false
+    )]
+    pub low_ext: bool,
 }
 
 #[derive(Args, Debug)]
