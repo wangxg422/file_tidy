@@ -1,8 +1,8 @@
-use std::fs;
-use walkdir::WalkDir;
 use crate::command::file::RenameArgs;
-use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA256, SHA3};
+use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
 use crate::util::compute_file_hash;
+use std::fs;
+use walkdir::{DirEntry, WalkDir};
 
 pub fn handle(args: &RenameArgs) {
     if !args.dir.exists() {
@@ -24,8 +24,12 @@ pub fn handle(args: &RenameArgs) {
         return;
     };
 
-    for entry in WalkDir::new(&args.dir) {
-        let entry = entry.unwrap();
+    for entry in WalkDir::new(&args.dir)
+        .into_iter()
+        .filter_entry(|e| !is_ignore(e))
+        .filter_map(Result::ok)
+    {
+        let entry = entry;
         let path = entry.path();
 
         if path.is_file() {
@@ -46,13 +50,16 @@ pub fn handle(args: &RenameArgs) {
                         ext_name = ext_name.to_ascii_lowercase();
                     }
                     path.with_file_name(format!("{}.{}", &new_name, ext_name))
-                },
-                None => path.with_file_name(&new_name)
+                }
+                None => path.with_file_name(&new_name),
             };
 
             println!("Renamed {:?} to {:?}", path, new_path);
             fs::rename(&path, &new_path).unwrap_or_else(|err| {
-                panic!("Failed to rename file {:?} to {:?}: {}", path, new_path, err);
+                panic!(
+                    "Failed to rename file {:?} to {:?}: {}",
+                    path, new_path, err
+                );
             });
         }
     }
@@ -82,14 +89,21 @@ fn rename_by_seq(args: &RenameArgs) {
                         ext_name = ext_name.to_ascii_lowercase();
                     }
                     path.with_file_name(format!("{}.{}", &new_name, ext_name))
-                },
-                None => path.with_file_name(&new_name)
+                }
+                None => path.with_file_name(&new_name),
             };
 
             println!("Renamed {:?} to {:?}", path, new_path);
             fs::rename(&path, &new_path).unwrap_or_else(|err| {
-                panic!("Failed to rename file {:?} to {:?}: {}", path, new_path, err);
+                panic!(
+                    "Failed to rename file {:?} to {:?}: {}",
+                    path, new_path, err
+                );
             });
         }
     }
+}
+
+fn is_ignore(entry: &DirEntry) -> bool {
+    entry.file_name().to_string_lossy().starts_with('.')
 }
