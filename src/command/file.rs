@@ -7,6 +7,9 @@ pub enum FileCommand {
     #[command(name = "dup-list", about = "list duplicate files")]
     DupList(DupListArgs),
 
+    #[command(name = "dup-del", about = "delete duplicate files")]
+    DupDel(DupDelArgs),
+
     #[command(name = "rename", about = "rename files using some rule, default is md5 value of file")]
     Rename(RenameArgs),
 }
@@ -14,8 +17,9 @@ pub enum FileCommand {
 impl FileCommand {
     pub fn exec(&self) {
         match self {
-            FileCommand::DupList(args) => handle::file_dup::handle(args),
-            FileCommand::Rename(args) => handle::file_rename::handle(args)
+            FileCommand::DupList(args) => handle::file_dup_list::handle(args),
+            FileCommand::DupDel(args) => handle::file_dup_del::handle(args),
+            FileCommand::Rename(args) => handle::file_rename::handle(args),
         }
     }
 }
@@ -27,6 +31,12 @@ pub struct DupListArgs {
 
     #[arg(short, long, help = "where to save the duplicate files", required = false)]
     pub output: Option<String>,
+}
+
+#[derive(Args)]
+pub struct DupDelArgs {
+    #[arg(short, long, help = "path of files", required = true)]
+    pub dir: PathBuf,
 }
 
 #[derive(Args)]
