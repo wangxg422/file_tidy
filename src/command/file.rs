@@ -67,6 +67,14 @@ pub struct RenameArgs {
         required = false
     )]
     pub low_ext: bool,
+
+    #[arg(
+        long = "seq-len",
+        help = "length of sequence, default 6",
+        required = false,
+        default_value = "6"
+    )]
+    pub seq_len: usize,
 }
 
 #[derive(Args, Debug)]
@@ -88,6 +96,6 @@ pub struct NamingRuleArgs {
     )]
     pub sha256: bool,
 
-    #[arg(long = "sha3", help = "rename file by sha3 value", required = false)]
+    #[arg(long = "sha3", help = "rename file by sha3-256 value", required = false)]
     pub sha3: bool,
 }
