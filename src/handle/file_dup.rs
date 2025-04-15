@@ -1,4 +1,4 @@
-use crate::command::file::DupArgs;
+use crate::command::file::DupListArgs;
 use crate::enumerate::file::FileHashType;
 use crate::util;
 use std::collections::BTreeMap;
@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-pub fn handle(args: &DupArgs) {
+pub fn handle(args: &DupListArgs) {
     let mut hashes: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
 
     for entry in WalkDir::new(&args.dir) {
@@ -25,7 +25,7 @@ pub fn handle(args: &DupArgs) {
     }
 
     match &args.output {
-        Some(output) => save_duplicates_to_file(&args.dir, output, &mut hashes),
+        Some(output) => save_duplicates_to_file(&args.dir, &output, &mut hashes),
         None => print_duplicates(&args.dir, &mut hashes)
     };
 }
@@ -75,7 +75,7 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, hashes: &mut BTreeMap<V
 
     for (hash, paths) in hashes {
         if paths.len() > 1 {
-            file.write_all(format!("Duplicate files sha3: {}\n", hex::encode(hash)).as_bytes())
+            file.write_all(format!("Duplicate files sha3-256: {}\n", hex::encode(hash)).as_bytes())
                 .expect("write to file failed");
             paths.sort();
             for path in paths {

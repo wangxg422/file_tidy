@@ -5,7 +5,7 @@ use crate::handle;
 #[derive(Subcommand)]
 pub enum FileCommand {
     #[command(name = "dup-list", about = "list duplicate files")]
-    Duplicates(DupArgs),
+    DupList(DupListArgs),
 
     #[command(name = "rename", about = "rename files using some rule, default is md5 value of file")]
     Rename(RenameArgs),
@@ -14,14 +14,14 @@ pub enum FileCommand {
 impl FileCommand {
     pub fn exec(&self) {
         match self {
-            FileCommand::Duplicates(args) => handle::file_dup::handle(args),
+            FileCommand::DupList(args) => handle::file_dup::handle(args),
             FileCommand::Rename(args) => handle::file_rename::handle(args)
         }
     }
 }
 
 #[derive(Args)]
-pub struct DupArgs {
+pub struct DupListArgs {
     #[arg(short, long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
