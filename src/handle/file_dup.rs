@@ -15,7 +15,7 @@ pub fn handle(args: &DupArgs) {
         let path = entry.path();
 
         if path.is_file() {
-            let hash = util::compute_file_hash(&FileHashType::MD5, path).unwrap();
+            let hash = util::compute_file_hash(&FileHashType::SHA3, path).unwrap();
 
             hashes
                 .entry(hash)
@@ -32,7 +32,7 @@ pub fn handle(args: &DupArgs) {
 
 fn print_duplicates(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>) {
     println!(
-        "Duplicate files in {}:\n\n",
+        "Duplicate files in {}:\n",
         path.as_os_str().to_str().unwrap()
     );
 
@@ -42,7 +42,7 @@ fn print_duplicates(path: &PathBuf, hashes: &mut BTreeMap<Vec<u8>, Vec<PathBuf>>
 
     for (hash, paths) in hashes {
         if paths.len() > 1 {
-            println!("Duplicate files sha3: {}", hex::encode(hash));
+            println!("Duplicate files sha3-256: {}", hex::encode(hash));
             paths.sort();
             for path in paths {
                 println!("    - {}", path.display());
