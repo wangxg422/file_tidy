@@ -75,6 +75,14 @@ pub struct RenameArgs {
         default_value = "6"
     )]
     pub seq_len: usize,
+
+    #[arg(
+        long = "ignore",
+        help = "ignore file and dir, hidden file (which start with '.' is ignored default)",
+        required = false,
+        multiple = true
+    )]
+    pub ignore: Vec<String>,
 }
 
 #[derive(Args, Debug)]

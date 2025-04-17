@@ -2,6 +2,7 @@ use crate::command::file::RenameArgs;
 use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
 use crate::util::compute_file_hash;
 use std::fs;
+use std::path::Path;
 use walkdir::{DirEntry, WalkDir};
 
 pub fn handle(args: &RenameArgs) {
@@ -24,13 +25,13 @@ pub fn handle(args: &RenameArgs) {
         return;
     };
 
-    for entry in WalkDir::new(&args.dir)
-        .into_iter()
-        .filter_entry(|e| !is_ignore(e))
-        .filter_map(Result::ok)
-    {
-        let entry = entry;
+    for entry in WalkDir::new(&args.dir) {
+        let entry = entry.unwrap();
         let path = entry.path();
+
+        if is_ignore(path, &args.ignore) {
+           continue;
+        }
 
         if path.is_file() {
             let hash = compute_file_hash(&naming_by, path).unwrap();
@@ -71,6 +72,10 @@ fn rename_by_seq(args: &RenameArgs) {
         let entry = entry.unwrap();
         let path = entry.path();
 
+        if is_ignore(path, &args.ignore) {
+            continue;
+        }
+
         if path.is_dir() {
             seq = 1;
         }
@@ -104,6 +109,18 @@ fn rename_by_seq(args: &RenameArgs) {
     }
 }
 
-fn is_ignore(entry: &DirEntry) -> bool {
-    entry.file_name().to_string_lossy().starts_with('.')
+fn is_ignore(path: &Path, ignore: Vec<String>) -> bool {
+    if path.is_file() {
+        if path.file_name().unwrap().to_string_lossy().starts_with(".") {
+            return true
+        }
+    }
+
+    if path.is_dir() {
+        if path.file_name().unwrap().to_string_lossy().starts_with(".") {
+            return true
+        }
+    }
+
+    true
 }

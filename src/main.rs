@@ -8,7 +8,7 @@ use crate::command::Commands;
 use clap::Parser;
 
 #[derive(Parser)]
-#[command(name = "cli", version = "1.0", about = "A cli sample")]
+#[command(name = "file-tidy", version = "v0.1.0", about = "A cli sample")]
 #[command(help_template = "{bin} {version}
 
 {about}
@@ -22,6 +22,9 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 
+    #[arg(short, long)]
+    debug: bool,
+
     #[arg(short, long, global = true)]
     verbose: bool,
 }
@@ -29,8 +32,8 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
 
-    if cli.verbose {
-        println!("Verbose mode enabled");
+    if cli.debug {
+        println!("Debug mode enabled");
     }
 
     cli.command.exec();
