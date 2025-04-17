@@ -109,15 +109,16 @@ fn rename_by_seq(args: &RenameArgs) {
     }
 }
 
-fn is_ignore(path: &Path, ignore: Vec<String>) -> bool {
+fn is_ignore(path: &Path, _ignore: &Vec<String>) -> bool {
+    let name = path.file_name().unwrap().to_string_lossy();
     if path.is_file() {
-        if path.file_name().unwrap().to_string_lossy().starts_with(".") {
+        if name.starts_with(".") {
             return true
         }
     }
 
     if path.is_dir() {
-        if path.file_name().unwrap().to_string_lossy().starts_with(".") {
+        if name.starts_with(".") {
             return true
         }
     }

@@ -14,6 +14,10 @@ pub fn handle(args: &DupListArgs) {
         let entry = entry.unwrap();
         let path = entry.path();
 
+        if path.file_name().unwrap().to_string_lossy().starts_with(".") {
+            continue;
+        }
+
         if path.is_file() {
             let hash = util::compute_file_hash(&FileHashType::SHA3, path).unwrap();
 
