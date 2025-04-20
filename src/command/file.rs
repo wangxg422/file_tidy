@@ -79,8 +79,7 @@ pub struct RenameArgs {
     #[arg(
         long = "ignore",
         help = "ignore file and dir, hidden file (which start with '.' is ignored default)",
-        required = false,
-        multiple = true
+        required = false
     )]
     pub ignore: Vec<String>,
 }

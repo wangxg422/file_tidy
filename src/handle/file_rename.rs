@@ -3,7 +3,7 @@ use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
 use crate::util::compute_file_hash;
 use std::fs;
 use std::path::Path;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 pub fn handle(args: &RenameArgs) {
     if !args.dir.exists() {
