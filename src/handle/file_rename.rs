@@ -12,17 +12,22 @@ pub fn handle(args: &RenameArgs) {
     }
 
     let naming_by = if args.naming_rule.md5 {
+        println!("rename file by md5");
         MD5
     } else if args.naming_rule.sha1 {
+        println!("rename file by sha1");
         SHA1
     } else if args.naming_rule.sha256 {
+        println!("rename file by sha256");
         SHA256
     } else if args.naming_rule.sha3 {
+        println!("rename file by sha3-256");
         SHA3
     } else if args.naming_rule.sequence {
+        println!("rename file by sequence");
         return rename_by_seq(args);
     } else {
-        return;
+        panic!("unknown naming rule");
     };
 
     for entry in WalkDir::new(&args.dir) {
@@ -30,7 +35,8 @@ pub fn handle(args: &RenameArgs) {
         let path = entry.path();
 
         if is_ignore(path, &args.ignore) {
-           continue;
+            println!("file {} is ignored", path.display());
+            continue;
         }
 
         if path.is_file() {
@@ -64,6 +70,8 @@ pub fn handle(args: &RenameArgs) {
             });
         }
     }
+
+    println!("file renamed finished");
 }
 
 fn rename_by_seq(args: &RenameArgs) {
@@ -73,6 +81,7 @@ fn rename_by_seq(args: &RenameArgs) {
         let path = entry.path();
 
         if is_ignore(path, &args.ignore) {
+            println!("file {} is ignored", path.display());
             continue;
         }
 
@@ -123,5 +132,5 @@ fn is_ignore(path: &Path, _ignore: &Vec<String>) -> bool {
         }
     }
 
-    true
+    false
 }
