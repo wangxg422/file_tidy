@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use clap::{Args, Subcommand};
+use crate::error::Error;
 use crate::handle;
 
 #[derive(Subcommand)]
@@ -15,7 +16,7 @@ pub enum FileCommand {
 }
 
 impl FileCommand {
-    pub fn exec(&self) {
+    pub fn exec(&self) -> Result<(), Error> {
         match self {
             FileCommand::DupList(args) => handle::file_dup_list::handle(args),
             FileCommand::DupDel(args) => handle::file_dup_del::handle(args),

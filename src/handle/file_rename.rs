@@ -4,11 +4,12 @@ use crate::util::compute_file_hash;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
+use crate::error::Error;
 
-pub fn handle(args: &RenameArgs) {
+pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     if !args.dir.exists() {
         println!("path does not exist: {}", args.dir.display());
-        return;
+        return Ok(())
     }
 
     let naming_by = if args.naming_rule.md5 {
@@ -72,9 +73,10 @@ pub fn handle(args: &RenameArgs) {
     }
 
     println!("file renamed finished");
+    Ok(())
 }
 
-fn rename_by_seq(args: &RenameArgs) {
+fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
     let mut seq = 1;
     for entry in WalkDir::new(&args.dir) {
         let entry = entry.unwrap();
@@ -116,6 +118,8 @@ fn rename_by_seq(args: &RenameArgs) {
             });
         }
     }
+    
+    Ok(())
 }
 
 fn is_ignore(path: &Path, _ignore: &Vec<String>) -> bool {

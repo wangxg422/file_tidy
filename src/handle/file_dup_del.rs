@@ -4,8 +4,9 @@ use crate::util;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+use crate::error::Error;
 
-pub fn handle(args: &DupDelArgs) {
+pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
     let mut hashes: HashMap<Vec<u8>, PathBuf> = HashMap::new();
 
     for entry in WalkDir::new(&args.dir) {
@@ -28,6 +29,8 @@ pub fn handle(args: &DupDelArgs) {
     }
 
     println!("duplicates files clear finished");
+    
+    Ok(())
 }
 
 // delete file when sha3-256 and md5 is same

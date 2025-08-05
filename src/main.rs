@@ -36,5 +36,10 @@ fn main() {
         println!("Debug mode enabled");
     }
 
-    cli.command.exec();
+    match cli.command.exec() {
+        Ok(()) => {
+            println!("Successfully executed");
+        },
+        Err(err) => eprintln!("Error: {}", err),
+    }
 }
