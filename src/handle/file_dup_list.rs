@@ -1,6 +1,6 @@
 use crate::command::file::DupListArgs;
 use crate::enumerate::file::FileHashType;
-use crate::util;
+use crate::util::hash::compute_file_hash;
 use std::collections::BTreeMap;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -22,7 +22,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
         .collect();
 
     entries.par_iter().for_each(|path| {
-        match util::compute_file_hash(&FileHashType::SHA3, path) {
+        match compute_file_hash(&FileHashType::SHA3, path) {
             Ok(hash) => {
                 // 尝试加锁
                 if let Ok(mut map) = hashes.lock() {
@@ -44,7 +44,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
         Some(output) => save_duplicates_to_file(&args.dir, &output, &hashes),
         None => print_duplicates(&args.dir, &hashes)
     };
-    
+
     Ok(())
 }
 

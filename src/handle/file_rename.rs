@@ -1,6 +1,6 @@
 use crate::command::file::RenameArgs;
 use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
-use crate::util::compute_file_hash;
+use crate::util::hash::compute_file_hash;
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;

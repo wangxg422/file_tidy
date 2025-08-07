@@ -1,0 +1,33 @@
+use std::fs::File;
+use std::io::Read;
+use md5::{Digest, Md5};
+use sha1::Sha1;
+use sha2::Sha256;
+use sha3::Sha3_256;
+use crate::enumerate::file::FileHashType;
+use crate::error::Error;
+
+pub fn compute_file_hash(hash_type: &FileHashType, path: &std::path::Path) -> Result<Vec<u8>, Error> {
+    let mut file = File::open(path)?;
+
+    let hash_result = match hash_type {
+        FileHashType::MD5 => compute_hash(&mut file, Md5::new()),
+        FileHashType::SHA1 => compute_hash(&mut file, Sha1::new()),
+        FileHashType::SHA256 => compute_hash(&mut file, Sha256::new()),
+        FileHashType::SHA3 => compute_hash(&mut file, Sha3_256::new()),
+    }?;
+
+    Ok(hash_result)
+}
+
+fn compute_hash<H: Digest>(file: &mut File, mut hasher: H) -> Result<Vec<u8>, Error> {
+    let mut buffer = [0; 1024];
+    loop {
+        let bytes_read = file.read(&mut buffer)?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+    Ok(hasher.finalize().to_vec())
+}

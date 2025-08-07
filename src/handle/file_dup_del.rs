@@ -1,6 +1,6 @@
 use crate::command::file::DupDelArgs;
 use crate::enumerate::file::FileHashType;
-use crate::util;
+use crate::util::hash::compute_file_hash;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -18,7 +18,7 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
         }
 
         if path.is_file() {
-            let hash = util::compute_file_hash(&FileHashType::SHA3, path).unwrap();
+            let hash = compute_file_hash(&FileHashType::SHA3, path).unwrap();
 
             if hashes.contains_key(&hash) {
                 delete_file(hashes.get(&hash).unwrap(), &path, &hash);
@@ -35,8 +35,8 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
 
 // delete file when sha3-256 and md5 is same
 fn delete_file(exist: &Path, to_delete: &Path, hash_sha3: &Vec<u8>) {
-    let hash_md5_exist = util::compute_file_hash(&FileHashType::MD5, to_delete).unwrap();
-    let hash_md5_delete = util::compute_file_hash(&FileHashType::MD5, exist).unwrap();
+    let hash_md5_exist = compute_file_hash(&FileHashType::MD5, to_delete).unwrap();
+    let hash_md5_delete = compute_file_hash(&FileHashType::MD5, exist).unwrap();
 
     if hash_md5_exist == hash_md5_delete {
         match std::fs::remove_file(to_delete) {
