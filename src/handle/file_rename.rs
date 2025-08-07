@@ -3,32 +3,34 @@ use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
 use crate::util::hash::compute_file_hash;
 use std::fs;
 use std::path::Path;
+use log::{error, info};
 use walkdir::WalkDir;
 use crate::error::Error;
 
 pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     if !args.dir.exists() {
-        println!("path does not exist: {}", args.dir.display());
-        return Ok(())
+        error!("path does not exist: {}", args.dir.display());
+        return Err(Error::CustomError(format!("path does not exist: {}", args.dir.display())));
     }
 
     let naming_by = if args.naming_rule.md5 {
-        println!("rename file by md5");
+        info!("rename file by md5");
         MD5
     } else if args.naming_rule.sha1 {
-        println!("rename file by sha1");
+        info!("rename file by sha1");
         SHA1
     } else if args.naming_rule.sha256 {
-        println!("rename file by sha256");
+        info!("rename file by sha256");
         SHA256
     } else if args.naming_rule.sha3 {
-        println!("rename file by sha3-256");
+        info!("rename file by sha3-256");
         SHA3
     } else if args.naming_rule.sequence {
-        println!("rename file by sequence");
+        info!("rename file by sequence");
         return rename_by_seq(args);
     } else {
-        panic!("unknown naming rule");
+        error!("unknown naming rule");
+        return Err(Error::CustomError("unknown naming rule".to_string()));
     };
 
     for entry in WalkDir::new(&args.dir) {
@@ -36,7 +38,7 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         let path = entry.path();
 
         if is_ignore(path, &args.ignore) {
-            println!("file {} is ignored", path.display());
+            info!("file {} is ignored", path.display());
             continue;
         }
 
@@ -62,9 +64,9 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
                 None => path.with_file_name(&new_name),
             };
 
-            println!("Renamed {:?} to {:?}", path, new_path);
+            info!("Renamed {:?} to {:?}", path, new_path);
             fs::rename(&path, &new_path).unwrap_or_else(|err| {
-                panic!(
+                error!(
                     "Failed to rename file {:?} to {:?}: {}",
                     path, new_path, err
                 );
@@ -72,7 +74,7 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         }
     }
 
-    println!("file renamed finished");
+    info!("file renamed finished");
     Ok(())
 }
 
@@ -109,16 +111,16 @@ fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
                 None => path.with_file_name(&new_name),
             };
 
-            println!("Renamed {:?} to {:?}", path, new_path);
+            info!("Renamed {:?} to {:?}", path, new_path);
             fs::rename(&path, &new_path).unwrap_or_else(|err| {
-                panic!(
+                error!(
                     "Failed to rename file {:?} to {:?}: {}",
                     path, new_path, err
                 );
             });
         }
     }
-    
+
     Ok(())
 }
 

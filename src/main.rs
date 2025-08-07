@@ -6,6 +6,7 @@ mod handle;
 
 use crate::command::Commands;
 use clap::Parser;
+use log::{debug, error, info};
 
 #[derive(Parser)]
 #[command(name = "file-tidy", version = "v0.1.0", about = "A cli sample")]
@@ -30,16 +31,18 @@ struct Cli {
 }
 
 fn main() {
+    log4rs::init_file("src/log4rs.yaml", Default::default()).unwrap();
+
     let cli = Cli::parse();
 
     if cli.debug {
-        println!("Debug mode enabled");
+        debug!("Debug mode enabled")
     }
 
     match cli.command.exec() {
         Ok(()) => {
-            println!("Successfully executed");
+            info!("executed finished");
         },
-        Err(err) => eprintln!("Error: {}", err),
+        Err(err) => error!("Error: {}", err),
     }
 }

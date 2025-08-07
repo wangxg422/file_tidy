@@ -6,6 +6,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use log::{error, info};
 use walkdir::WalkDir;
 use rayon::prelude::*;
 use crate::error::Error;
@@ -30,11 +31,11 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
                         .or_insert_with(Vec::new)
                         .push(path.clone());
                 } else {
-                    eprintln!("Failed to acquire lock when processing: {}", path.display());
+                    error!("Failed to acquire lock when processing: {}", path.display());
                 }
             }
             Err(err) => {
-                eprintln!("Failed to compute hash for {}: {}", path.display(), err);
+                error!("Failed to compute hash for {}: {}", path.display(), err);
             }
         }
     });
@@ -49,7 +50,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
 }
 
 fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathBuf>>>>) {
-    println!(
+    info!(
         "Duplicate files in {}:\n",
         path.as_os_str().to_str().unwrap()
     );
@@ -70,7 +71,7 @@ fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathB
             }
         }
     } else {
-        eprintln!("Failed to acquire lock when processing: {}", path.display());
+        error!("Failed to acquire lock when processing: {}", path.display());
     }
 }
 
@@ -110,10 +111,10 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeM
             }
         }
     } else {
-        eprintln!("Failed to acquire lock when processing: {}", path.display());
+        error!("Failed to acquire lock when processing: {}", path.display());
     }
 
-    println!(
+    info!(
         "Duplicate files check finished, please confirm at: {}\n",
         output
     );

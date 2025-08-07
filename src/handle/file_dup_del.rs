@@ -3,6 +3,7 @@ use crate::enumerate::file::FileHashType;
 use crate::util::hash::compute_file_hash;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use log::{info, warn};
 use walkdir::WalkDir;
 use crate::error::Error;
 
@@ -28,7 +29,7 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
         }
     }
 
-    println!("duplicates files clear finished");
+    info!("duplicates files clear finished");
     
     Ok(())
 }
@@ -44,7 +45,7 @@ fn delete_file(exist: &Path, to_delete: &Path, hash_sha3: &Vec<u8>) {
             Err(error) => println!("Error delete file {:?}:{:?}", to_delete, error),
         }
     } else {
-        println!(
+        warn!(
             "Files:\n\
     - {:?} (SHA3-256: {}, MD5: {})\n\
     - {:?} (SHA3-256: {}, MD5: {})\n\
