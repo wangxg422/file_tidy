@@ -1,12 +1,16 @@
 mod command;
-mod error;
-mod util;
 mod enumerate;
+mod error;
 mod handle;
+mod util;
 
 use crate::command::Commands;
 use clap::Parser;
-use log::{debug, error, info};
+use log::{debug, error, info, LevelFilter};
+use log4rs::append::console::{ConsoleAppender, Target};
+use log4rs::Config;
+use log4rs::config::{Appender, Root};
+use log4rs::encode::pattern::PatternEncoder;
 
 #[derive(Parser)]
 #[command(name = "file-tidy", version = "v0.1.0", about = "A cli sample")]
@@ -31,7 +35,21 @@ struct Cli {
 }
 
 fn main() {
-    log4rs::init_file("src/log4rs.yaml", Default::default()).unwrap();
+    // 创建 stdout appender
+    let stdout = ConsoleAppender::builder()
+        .encoder(Box::new(PatternEncoder::new(
+            "{d(%Y-%m-%d %H:%M:%S%.3f)} {M} {l} - {m}{n}",
+        )))
+        .target(Target::Stdout)
+        .build();
+
+    // 配置
+    let config = Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Debug)).unwrap();
+
+    // 初始化 log4rs
+    log4rs::init_config(config).unwrap();
 
     let cli = Cli::parse();
 
@@ -42,7 +60,7 @@ fn main() {
     match cli.command.exec() {
         Ok(()) => {
             info!("executed finished");
-        },
+        }
         Err(err) => error!("Error: {}", err),
     }
 }
