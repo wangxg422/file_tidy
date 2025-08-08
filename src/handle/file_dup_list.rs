@@ -51,7 +51,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
 
 fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathBuf>>>>) {
     info!(
-        "Duplicate files in {}:\n",
+        "duplicate files found in {}:\n",
         path.as_os_str().to_str().unwrap()
     );
 
@@ -62,7 +62,7 @@ fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathB
 
         for (hash, paths) in hashes.iter_mut() {
             if paths.len() > 1 {
-                println!("Duplicate files sha3-256: {}", hex::encode(hash));
+                println!("duplicate files (sha3-256: {})", hex::encode(hash));
                 paths.sort();
                 for path in paths {
                     println!("    - {}", path.display());
@@ -71,7 +71,7 @@ fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathB
             }
         }
     } else {
-        error!("Failed to acquire lock when processing: {}", path.display());
+        error!("failed to acquire lock when processing: {}", path.display());
     }
 }
 
@@ -85,7 +85,7 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeM
 
     file.write_all(
         format!(
-            "Duplicate files in {}:\n\n",
+            "duplicate files found in {}:\n\n",
             path.as_os_str().to_str().unwrap()
         )
         .as_bytes(),
@@ -99,7 +99,7 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeM
 
         for (hash, paths) in hashes.iter_mut() {
             if paths.len() > 1 {
-                file.write_all(format!("Duplicate files sha3-256: {}\n", hex::encode(hash)).as_bytes())
+                file.write_all(format!("duplicate files (sha3-256: {}\n)", hex::encode(hash)).as_bytes())
                     .expect("write to file failed");
                 paths.sort();
                 for path in paths {
@@ -111,11 +111,11 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeM
             }
         }
     } else {
-        error!("Failed to acquire lock when processing: {}", path.display());
+        error!("failed to acquire lock when processing: {}", path.display());
     }
 
     info!(
-        "Duplicate files check finished, please confirm at: {}\n",
+        "duplicate files check finished, please confirm at: {}\n",
         output
     );
 }

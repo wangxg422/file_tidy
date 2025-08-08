@@ -32,7 +32,10 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
                             file.display(),
                             hex::encode(hash),
                         );
-                        delete_file(file, &path);
+                        match delete_file(file, &path) {
+                            Ok(()) => info!("File {:?} successfully deleted", path.display()),
+                            Err(err) => error!("File {:?} error: {}", path.display(), err),
+                        }
                     } else {
                         map.insert(hash, path.to_path_buf());
                     }
