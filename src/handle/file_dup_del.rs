@@ -6,7 +6,7 @@ use log::{error, info, warn};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::prelude::*;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use walkdir::WalkDir;
 
@@ -22,7 +22,7 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
 
     entries
         .par_iter()
-        .for_each(|path| match compute_file_hash(&FileHashType::SHA3, path) {
+        .for_each(|path| match compute_file_hash(path, &FileHashType::SHA3_256) {
             Ok(hash) => {
                 if let Ok(mut map) = hashes.lock() {
                     if map.contains_key(&hash) {
@@ -54,9 +54,9 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
 }
 
 // delete file if sha3-256 and md5 is same
-fn delete_file(exist: &Path, to_delete: &Path) -> Result<(), Error> {
-    let hash_md5_exist = compute_file_hash(&FileHashType::MD5, to_delete).unwrap();
-    let hash_md5_delete = compute_file_hash(&FileHashType::MD5, exist).unwrap();
+fn delete_file(exist: &PathBuf, to_delete: &PathBuf) -> Result<(), Error> {
+    let hash_md5_exist = compute_file_hash(to_delete, &FileHashType::MD5).unwrap();
+    let hash_md5_delete = compute_file_hash(exist, &FileHashType::MD5).unwrap();
 
     if hash_md5_exist == hash_md5_delete {
         match std::fs::remove_file(to_delete) {

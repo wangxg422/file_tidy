@@ -1,20 +1,17 @@
 use crate::command::file::DupListArgs;
 use crate::enumerate::file::FileHashType;
+use crate::error::Error;
 use crate::util::hash::compute_file_hash;
+use log::{info, warn};
+use rayon::prelude::*;
 use std::collections::BTreeMap;
+use std::fs;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use log::{error, info};
 use walkdir::WalkDir;
-use rayon::prelude::*;
-use crate::error::Error;
 
 pub fn handle(args: &DupListArgs) -> Result<(), Error> {
-    let hashes: Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathBuf>>>> = Arc::new(Mutex::new(BTreeMap::new()));
-
-
     let entries: Vec<_> = WalkDir::new(&args.dir)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -22,60 +19,74 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
         .map(|e| e.path().to_path_buf())
         .collect();
 
-    entries.par_iter().for_each(|path| {
-        match compute_file_hash(&FileHashType::SHA3, path) {
-            Ok(hash) => {
-                // 尝试加锁
-                if let Ok(mut map) = hashes.lock() {
-                    map.entry(hash)
-                        .or_insert_with(Vec::new)
-                        .push(path.clone());
+    // 按照文件大小分组,文件大小不同，一定不是同一文件,只有文件大小相同的文件才可能是同一文件
+    let mut size_groups: BTreeMap<u64, Vec<PathBuf>> = BTreeMap::new();
+    for path in entries {
+        if let Ok(meta) = fs::metadata(&path) {
+            size_groups.entry(meta.len()).or_default().push(path);
+        } else {
+            warn!("Failed to get metadata for {}", path.display());
+        }
+    }
+
+    let result: BTreeMap<Vec<u8>, Vec<PathBuf>> = size_groups
+        .into_par_iter()
+        .filter(|(_, files)| files.len() > 1)
+        .map(|(_, files)| {
+            let mut map: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
+            for file in files {
+                if let Ok(h) = compute_file_hash(&file, &FileHashType::SHA3_256) {
+                    map.entry(h).or_insert_with(|| Vec::new()).push(file);
                 } else {
-                    error!("Failed to acquire lock when processing: {}", path.display());
+                    warn!("Failed to compute hash for file {}", file.display());
                 }
             }
-            Err(err) => {
-                error!("Failed to compute hash for {}: {}", path.display(), err);
-            }
-        }
-    });
 
+            map
+        })
+        .reduce(
+            || BTreeMap::new(),
+            |mut acc, local| {
+                for (h, paths) in local {
+                    acc.entry(h).or_default().extend(paths);
+                }
+                acc
+            },
+        )
+        .into_iter()
+        .filter(|(_, files)| files.len() > 1)
+        .map(|(h, mut files)| {
+            files.sort();
+            (h, files)
+        })
+        .collect();
 
-    match &args.output {
-        Some(output) => save_duplicates_to_file(&args.dir, &output, &hashes),
-        None => print_duplicates(&args.dir, &hashes)
-    };
-
+    if let Some(output) = &args.output {
+        save_duplicates_to_file(&args.dir, output, &result);
+    } else {
+        print_duplicates(&args.dir, result)
+    }
     Ok(())
 }
 
-fn print_duplicates(path: &PathBuf, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathBuf>>>>) {
+fn print_duplicates(path: &PathBuf, hashes: BTreeMap<Vec<u8>, Vec<PathBuf>>) {
     info!(
         "duplicate files found in {}:\n",
         path.as_os_str().to_str().unwrap()
     );
 
-    if let Ok(mut hashes) = dups.lock() {
-        for files in hashes.values_mut() {
-            files.sort();
-        }
-
-        for (hash, paths) in hashes.iter_mut() {
-            if paths.len() > 1 {
-                println!("duplicate files (sha3-256: {})", hex::encode(hash));
-                paths.sort();
-                for path in paths {
-                    println!("    - {}", path.display());
-                }
-                print!("\n");
+    for (hash, paths) in hashes.iter() {
+        if paths.len() > 1 {
+            println!("duplicate files (sha3-256: {})", hex::encode(hash));
+            for path in paths {
+                println!("    - {}", path.display());
             }
+            print!("\n");
         }
-    } else {
-        error!("failed to acquire lock when processing: {}", path.display());
     }
 }
 
-fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeMap<Vec<u8>, Vec<PathBuf>>>>) {
+fn save_duplicates_to_file(path: &PathBuf, output: &str, hashes: &BTreeMap<Vec<u8>, Vec<PathBuf>>) {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -92,26 +103,20 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, dups: &Arc<Mutex<BTreeM
     )
     .expect("write to file failed");
 
-    if let Ok(mut hashes) = dups.lock() {
-        for files in hashes.values_mut() {
-            files.sort();
-        }
+    for (hash, paths) in hashes.iter() {
+        if paths.len() > 1 {
+            file.write_all(
+                format!("duplicate files (sha3-256: {}\n)", hex::encode(hash)).as_bytes(),
+            )
+            .expect("write to file failed");
 
-        for (hash, paths) in hashes.iter_mut() {
-            if paths.len() > 1 {
-                file.write_all(format!("duplicate files (sha3-256: {}\n)", hex::encode(hash)).as_bytes())
-                    .expect("write to file failed");
-                paths.sort();
-                for path in paths {
-                    file.write_all(format!("    - {}\n", path.display()).as_bytes())
-                        .expect("write to file failed");
-                }
-                file.write_all(format!("{}", "\n").as_bytes())
+            for path in paths {
+                file.write_all(format!("    - {}\n", path.display()).as_bytes())
                     .expect("write to file failed");
             }
+            file.write_all(format!("{}", "\n").as_bytes())
+                .expect("write to file failed");
         }
-    } else {
-        error!("failed to acquire lock when processing: {}", path.display());
     }
 
     info!(

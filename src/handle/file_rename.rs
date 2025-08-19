@@ -1,5 +1,5 @@
 use crate::command::file::RenameArgs;
-use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3, SHA256};
+use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3_256, SHA256};
 use crate::util::hash::compute_file_hash;
 use std::fs;
 use std::path::Path;
@@ -24,7 +24,7 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         SHA256
     } else if args.naming_rule.sha3 {
         info!("rename file by sha3-256");
-        SHA3
+        SHA3_256
     } else if args.naming_rule.sequence {
         info!("rename file by sequence");
         return rename_by_seq(args);
@@ -43,7 +43,7 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         }
 
         if path.is_file() {
-            let hash = compute_file_hash(&naming_by, path).unwrap();
+            let hash = compute_file_hash(path, &naming_by).unwrap();
             let new_name = if args.upper {
                 hex::encode_upper(hash)
             } else {
