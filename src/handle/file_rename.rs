@@ -6,6 +6,7 @@ use std::path::Path;
 use log::{error, info};
 use walkdir::WalkDir;
 use crate::error::Error;
+use rayon::prelude::*;
 
 pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     if !args.dir.exists() {
@@ -33,14 +34,20 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         return Err(Error::CustomError("unknown naming rule".to_string()));
     };
 
+    let entries: Vec<_> = WalkDir::new(&args.dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with("."))
+        .map(|e| e.path().to_path_buf())
+        .collect();
+
+    entries.par_iter().for_each(|file | {
+
+    });
+
     for entry in WalkDir::new(&args.dir) {
         let entry = entry.unwrap();
         let path = entry.path();
-
-        if is_ignore(path, &args.ignore) {
-            info!("file {} is ignored", path.display());
-            continue;
-        }
 
         if path.is_file() {
             let hash = compute_file_hash(path, &naming_by).unwrap();
