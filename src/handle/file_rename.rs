@@ -76,12 +76,16 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
                     if args.low_ext {
                         ext_name = ext_name.to_ascii_lowercase();
                     }
-                    file.with_file_name(format!("{}.{}", &new_name, ext_name))
+
+                    let prefix = &args.prefix.as_deref().unwrap_or("");
+                    let suffix = &args.suffix.as_deref().unwrap_or("");
+
+                    file.with_file_name(format!("{}{}{}.{}", prefix, &new_name, suffix, ext_name))
                 }
                 None => file.with_file_name(&new_name),
             };
 
-            info!("Renamed {:?} to {:?}", file, new_path);
+            info!("renamed {:?} to {:?}", file, new_path);
             fs::rename(&file, &new_path).unwrap_or_else(|err| {
                 error!(
                     "Failed to rename file {:?} to {:?}: {}",
@@ -125,12 +129,16 @@ fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
                 } else {
                     ext.to_string()
                 };
-                file.with_file_name(format!("{}.{}", new_name, ext_name))
+
+                let prefix = &args.prefix.as_deref().unwrap_or("");
+                let suffix = &args.suffix.as_deref().unwrap_or("");
+
+                file.with_file_name(format!("{}{}{}.{}", prefix, new_name, suffix, ext_name))
             }
             _ => file.with_file_name(&new_name),
         };
 
-        info!("Renamed {:?} to {:?}", file, new_path);
+        info!("renamed {:?} to {:?}", file, new_path);
         if let Err(err) = fs::rename(file, &new_path) {
             error!(
                 "Failed to rename file {:?} to {:?}: {}",

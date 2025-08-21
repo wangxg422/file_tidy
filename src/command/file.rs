@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use clap::{Args, Subcommand};
 use crate::error::Error;
 use crate::handle;
+use clap::{Args, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Subcommand)]
 pub enum FileCommand {
@@ -11,7 +11,10 @@ pub enum FileCommand {
     #[command(name = "dup-del", about = "delete duplicate files")]
     DupDel(DupDelArgs),
 
-    #[command(name = "rename", about = "rename files using some rule, default is md5 value of file")]
+    #[command(
+        name = "rename",
+        about = "rename files using some rule, default is md5 value of file"
+    )]
     Rename(RenameArgs),
 }
 
@@ -30,7 +33,12 @@ pub struct DupListArgs {
     #[arg(short, long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
-    #[arg(short, long, help = "where to save the duplicate files", required = false)]
+    #[arg(
+        short,
+        long,
+        help = "where to save the duplicate files",
+        required = false
+    )]
     pub output: Option<String>,
 }
 
@@ -77,6 +85,12 @@ pub struct RenameArgs {
     )]
     pub seq_len: usize,
 
+    #[arg(long = "prefix", help = "prefix of file name", required = false)]
+    pub prefix: Option<String>,
+
+    #[arg(long = "suffix", help = "suffix of file name", required = false)]
+    pub suffix: Option<String>,
+
     #[arg(
         long = "ignore",
         help = "ignore file and dir, hidden file (which start with '.' is ignored default)",
@@ -104,15 +118,31 @@ pub struct NamingRuleArgs {
     )]
     pub sha256: bool,
 
-    #[arg(long = "sha3-224", help = "rename file by sha3-224 value", required = false)]
+    #[arg(
+        long = "sha3-224",
+        help = "rename file by sha3-224 value",
+        required = false
+    )]
     pub sha3_224: bool,
 
-    #[arg(long = "sha3-256", help = "rename file by sha3-256 value", required = false)]
+    #[arg(
+        long = "sha3-256",
+        help = "rename file by sha3-256 value",
+        required = false
+    )]
     pub sha3_256: bool,
 
-    #[arg(long = "sha3-384", help = "rename file by sha3-384 value", required = false)]
+    #[arg(
+        long = "sha3-384",
+        help = "rename file by sha3-384 value",
+        required = false
+    )]
     pub sha3_384: bool,
 
-    #[arg(long = "sha3-512", help = "rename file by sha3-512 value", required = false)]
+    #[arg(
+        long = "sha3-512",
+        help = "rename file by sha3-512 value",
+        required = false
+    )]
     pub sha3_512: bool,
 }
