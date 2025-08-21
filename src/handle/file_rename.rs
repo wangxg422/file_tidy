@@ -7,7 +7,6 @@ use crate::util::hash::compute_file_hash;
 use log::{error, info};
 use rayon::prelude::*;
 use std::fs;
-use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 pub fn handle(args: &RenameArgs) -> Result<(), Error> {
@@ -49,9 +48,14 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     };
 
     let entries: Vec<_> = WalkDir::new(&args.dir)
+        .max_depth(1)
         .into_iter()
+        .filter_entry(|e| {
+            // 目录或文件名不是隐藏的才进入
+            !e.file_name().to_string_lossy().starts_with('.')
+        })
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with("."))
+        .filter(|e| e.file_type().is_file()) // 只要文件
         .map(|e| e.path().to_path_buf())
         .collect();
 
@@ -94,10 +98,15 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
 }
 
 fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
-    let mut entries: Vec<PathBuf> = WalkDir::new(&args.dir)
+    let mut entries: Vec<_> = WalkDir::new(&args.dir)
+        .max_depth(1)
         .into_iter()
+        .filter_entry(|e| {
+            // 目录或文件名不是隐藏的才进入
+            !e.file_name().to_string_lossy().starts_with('.')
+        })
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with('.'))
+        .filter(|e| e.file_type().is_file()) // 只要文件
         .map(|e| e.path().to_path_buf())
         .collect();
 

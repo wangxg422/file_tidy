@@ -14,8 +14,12 @@ use walkdir::WalkDir;
 pub fn handle(args: &DupListArgs) -> Result<(), Error> {
     let entries: Vec<_> = WalkDir::new(&args.dir)
         .into_iter()
+        .filter_entry(|e| {
+            // 目录或文件名不是隐藏的才进入
+            !e.file_name().to_string_lossy().starts_with('.')
+        })
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with("."))
+        .filter(|e| e.file_type().is_file()) // 只要文件
         .map(|e| e.path().to_path_buf())
         .collect();
 
