@@ -1,3 +1,4 @@
+use crate::enumerate::file::FileHashType;
 use crate::{enumerate::sort::FileSort, error::Error};
 use crate::handle;
 use clap::{Args, Subcommand};
@@ -48,6 +49,14 @@ pub struct DupListArgs {
         required = false
     )]
     pub recursive: bool,
+
+    #[arg(
+        short,
+        long,
+        help = "hash algorithm to compute the file digest: md5|sha1|sha256|sha3-224|sha3-256|sha3-384|sha3-512, default is sha3-256",
+        required = false
+    )]
+    pub digest: FileHashType,
 }
 
 #[derive(Args)]
