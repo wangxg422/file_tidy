@@ -40,12 +40,28 @@ pub struct DupListArgs {
         required = false
     )]
     pub output: Option<String>,
+
+    #[arg(
+        short,
+        long,
+        help = "whether to recursively search for duplicate files",
+        required = false
+    )]
+    pub recursive: bool,
 }
 
 #[derive(Args)]
 pub struct DupDelArgs {
     #[arg(short, long, help = "path of files", required = true)]
     pub dir: PathBuf,
+
+    #[arg(
+        short,
+        long,
+        help = "whether to recursively delete for duplicate files",
+        required = false
+    )]
+    pub recursive: bool,
 }
 
 #[derive(Args)]

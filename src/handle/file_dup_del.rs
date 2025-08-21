@@ -13,16 +13,25 @@ use walkdir::WalkDir;
 pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
     let hashes: Arc<Mutex<HashMap<Vec<u8>, PathBuf>>> = Arc::new(Mutex::new(HashMap::new()));
 
-    let entries: Vec<_> = WalkDir::new(&args.dir)
+    let mut walkdir = WalkDir::new(&args.dir);
+
+    if !args.recursive {
+        walkdir = walkdir.max_depth(1);
+    }
+
+    let entries: Vec<_> = walkdir
         .into_iter()
+        .filter_entry(|e| {
+            // 目录或文件名不是隐藏的才进入
+            !e.file_name().to_string_lossy().starts_with('.')
+        })
         .filter_map(|e| e.ok())
-        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with("."))
+        .filter(|e| e.file_type().is_file()) // 只要文件
         .map(|e| e.path().to_path_buf())
         .collect();
 
-    entries
-        .par_iter()
-        .for_each(|path| match compute_file_hash(path, &FileHashType::SHA3_256) {
+    entries.par_iter().for_each(
+        |path| match compute_file_hash(path, &FileHashType::SHA3_256) {
             Ok(hash) => {
                 if let Ok(mut map) = hashes.lock() {
                     if map.contains_key(&hash) {
@@ -46,7 +55,8 @@ pub fn handle(args: &DupDelArgs) -> Result<(), Error> {
             Err(err) => {
                 error!("Failed to compute hash for {}: {}", path.display(), err);
             }
-        });
+        },
+    );
 
     info!("duplicates files delete finished");
 
@@ -66,7 +76,10 @@ fn delete_file(exist: &PathBuf, to_delete: &PathBuf) -> Result<(), Error> {
             }
             Err(err) => {
                 error!("Error delete file {:?}:{:?}", to_delete, err);
-                Err(Error::CustomError(format!("Failed to delete file {:?}: {}", to_delete, err)))
+                Err(Error::CustomError(format!(
+                    "Failed to delete file {:?}: {}",
+                    to_delete, err
+                )))
             }
         }
     } else {
@@ -80,6 +93,10 @@ fn delete_file(exist: &PathBuf, to_delete: &PathBuf) -> Result<(), Error> {
             to_delete,
             hex::encode(hash_md5_delete)
         );
-        Err(Error::CustomError(format!("File {} and {} are the same in SHA3-256, but different in MD5", exist.display(), to_delete.display())))
+        Err(Error::CustomError(format!(
+            "File {} and {} are the same in SHA3-256, but different in MD5",
+            exist.display(),
+            to_delete.display()
+        )))
     }
 }

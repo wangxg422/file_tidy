@@ -12,7 +12,13 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub fn handle(args: &DupListArgs) -> Result<(), Error> {
-    let entries: Vec<_> = WalkDir::new(&args.dir)
+    let mut walkdir = WalkDir::new(&args.dir);
+
+    if !args.recursive {
+        walkdir = walkdir.max_depth(1);
+    }
+
+    let entries: Vec<_> = walkdir
         .into_iter()
         .filter_entry(|e| {
             // 目录或文件名不是隐藏的才进入
