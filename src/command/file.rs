@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::{enumerate::sort::FileSort, error::Error};
 use crate::handle;
 use clap::{Args, Subcommand};
 use std::path::PathBuf;
@@ -85,6 +85,9 @@ pub struct RenameArgs {
     )]
     pub seq_len: usize,
 
+    #[command(flatten)]
+    pub seq_sort: SeqSortArgs,
+
     #[arg(long = "prefix", help = "prefix of file name", required = false)]
     pub prefix: Option<String>,
 
@@ -145,4 +148,34 @@ pub struct NamingRuleArgs {
         required = false
     )]
     pub sha3_512: bool,
+}
+
+
+#[derive(Args, Debug)]
+pub struct SeqSortArgs {
+    #[arg(
+        long = "sort",
+        help = "sort of file when rename file by sequence, one of name|size|time, default is name",
+        required = false,
+        default_value = "name"
+    )]
+    pub sort: FileSort,
+
+    #[arg(
+        long = "asc",
+        help = "if `--sort` is setted, set asc to ",
+        required = false,
+        requires = "sort",
+        group = "rename-seq-sort"
+    )]
+    pub asc: bool,
+
+    #[arg(
+        long = "desc",
+        help = "if `--sort` is setted, set desc to ",
+        required = false,
+        requires = "sort",
+        group = "rename-seq-sort"
+    )]
+    pub desc: bool,
 }

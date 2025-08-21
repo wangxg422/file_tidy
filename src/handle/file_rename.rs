@@ -2,9 +2,10 @@ use crate::command::file::RenameArgs;
 use crate::enumerate::file::FileHashType::{
     MD5, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, SHA256,
 };
+use crate::enumerate::sort::FileSort;
 use crate::error::Error;
 use crate::util::hash::compute_file_hash;
-use log::{error, info};
+use log::{debug, error, info};
 use rayon::prelude::*;
 use std::fs;
 use walkdir::WalkDir;
@@ -114,7 +115,51 @@ fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
         .map(|e| e.path().to_path_buf())
         .collect();
 
-    entries.sort(); // 按路径字典序
+    match args.seq_sort.sort {
+        FileSort::Name => {
+            if args.seq_sort.desc {
+                debug!("sort by file name, desc");
+                entries.sort_by(|a, b| b.cmp(a))
+            } else {
+                debug!("sort by file name, asc");
+                entries.sort_by(|a, b| a.cmp(b))
+            }
+        },
+        FileSort::Size => {
+            if args.seq_sort.desc {
+                debug!("sort by file size, desc");
+                entries.sort_by(|a, b| {
+                    let a = a.metadata().unwrap().len();
+                    let b = b.metadata().unwrap().len();
+                    b.cmp(&a)
+                })
+            } else {
+                debug!("sort by file size, asc");
+                entries.sort_by(|a, b| {
+                    let a = a.metadata().unwrap().len();
+                    let b = b.metadata().unwrap().len();
+                    a.cmp(&b)
+                })
+            }
+        },
+        FileSort::Time => {
+            if args.seq_sort.desc {
+                debug!("sort by last update time, desc");
+                entries.sort_by(|a, b| {
+                    let a = a.metadata().unwrap().modified().unwrap();
+                    let b = b.metadata().unwrap().modified().unwrap();
+                    b.cmp(&a)
+                })
+            } else {
+                debug!("sort by last update time, desc");
+                entries.sort_by(|a, b| {
+                    let a = a.metadata().unwrap().modified().unwrap();
+                    let b = b.metadata().unwrap().modified().unwrap();
+                    a.cmp(&b)
+                })
+            }
+        },
+    }
 
     // 使用 enumerate 分配序号，避免共享可变 state
     entries.par_iter().enumerate().for_each(|(i, file)| {
