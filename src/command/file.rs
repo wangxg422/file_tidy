@@ -104,6 +104,15 @@ pub struct NamingRuleArgs {
     )]
     pub sha256: bool,
 
-    #[arg(long = "sha3", help = "rename file by sha3-256 value", required = false)]
-    pub sha3: bool,
+    #[arg(long = "sha3-224", help = "rename file by sha3-224 value", required = false)]
+    pub sha3_224: bool,
+
+    #[arg(long = "sha3-256", help = "rename file by sha3-256 value", required = false)]
+    pub sha3_256: bool,
+
+    #[arg(long = "sha3-384", help = "rename file by sha3-384 value", required = false)]
+    pub sha3_384: bool,
+
+    #[arg(long = "sha3-512", help = "rename file by sha3-512 value", required = false)]
+    pub sha3_512: bool,
 }

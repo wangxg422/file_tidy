@@ -1,17 +1,22 @@
 use crate::command::file::RenameArgs;
-use crate::enumerate::file::FileHashType::{MD5, SHA1, SHA3_256, SHA256};
-use crate::util::hash::compute_file_hash;
-use std::fs;
-use std::path::Path;
-use log::{error, info};
-use walkdir::WalkDir;
+use crate::enumerate::file::FileHashType::{
+    MD5, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, SHA256,
+};
 use crate::error::Error;
+use crate::util::hash::compute_file_hash;
+use log::{error, info};
 use rayon::prelude::*;
+use std::fs;
+use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     if !args.dir.exists() {
         error!("path does not exist: {}", args.dir.display());
-        return Err(Error::CustomError(format!("path does not exist: {}", args.dir.display())));
+        return Err(Error::CustomError(format!(
+            "path does not exist: {}",
+            args.dir.display()
+        )));
     }
 
     let naming_by = if args.naming_rule.md5 {
@@ -23,9 +28,18 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
     } else if args.naming_rule.sha256 {
         info!("rename file by sha256");
         SHA256
-    } else if args.naming_rule.sha3 {
+    } else if args.naming_rule.sha3_224 {
+        info!("rename file by sha3-224");
+        SHA3_224
+    } else if args.naming_rule.sha3_256 {
         info!("rename file by sha3-256");
         SHA3_256
+    } else if args.naming_rule.sha3_384 {
+        info!("rename file by sha3-384");
+        SHA3_384
+    } else if args.naming_rule.sha3_512 {
+        info!("rename file by sha3-512");
+        SHA3_512
     } else if args.naming_rule.sequence {
         info!("rename file by sequence");
         return rename_by_seq(args);
@@ -41,23 +55,15 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
         .map(|e| e.path().to_path_buf())
         .collect();
 
-    entries.par_iter().for_each(|file | {
-
-    });
-
-    for entry in WalkDir::new(&args.dir) {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.is_file() {
-            let hash = compute_file_hash(path, &naming_by).unwrap();
+    entries.par_iter().for_each(|file| {
+        if let Ok(hash) = compute_file_hash(file, &naming_by) {
             let new_name = if args.upper {
                 hex::encode_upper(hash)
             } else {
                 hex::encode(hash)
             };
 
-            let new_path = match path.extension() {
+            let new_path = match file.extension() {
                 Some(ext) => {
                     let mut ext_name = ext.to_str().unwrap().to_string();
                     if args.upper_ext {
@@ -66,84 +72,63 @@ pub fn handle(args: &RenameArgs) -> Result<(), Error> {
                     if args.low_ext {
                         ext_name = ext_name.to_ascii_lowercase();
                     }
-                    path.with_file_name(format!("{}.{}", &new_name, ext_name))
+                    file.with_file_name(format!("{}.{}", &new_name, ext_name))
                 }
-                None => path.with_file_name(&new_name),
+                None => file.with_file_name(&new_name),
             };
 
-            info!("Renamed {:?} to {:?}", path, new_path);
-            fs::rename(&path, &new_path).unwrap_or_else(|err| {
+            info!("Renamed {:?} to {:?}", file, new_path);
+            fs::rename(&file, &new_path).unwrap_or_else(|err| {
                 error!(
                     "Failed to rename file {:?} to {:?}: {}",
-                    path, new_path, err
+                    file, new_path, err
                 );
             });
+        } else {
+            error!("Failed to compute hash for file {:?}", file);
         }
-    }
+    });
 
     info!("file renamed finished");
     Ok(())
 }
 
 fn rename_by_seq(args: &RenameArgs) -> Result<(), Error> {
-    let mut seq = 1;
-    for entry in WalkDir::new(&args.dir) {
-        let entry = entry.unwrap();
-        let path = entry.path();
+    let mut entries: Vec<PathBuf> = WalkDir::new(&args.dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file() && !e.file_name().to_string_lossy().starts_with('.'))
+        .map(|e| e.path().to_path_buf())
+        .collect();
 
-        if is_ignore(path, &args.ignore) {
-            println!("file {} is ignored", path.display());
-            continue;
+    entries.sort(); // 按路径字典序
+
+    // 使用 enumerate 分配序号，避免共享可变 state
+    entries.par_iter().enumerate().for_each(|(i, file)| {
+        let new_name = format!("{:0width$}", i + 1, width = args.seq_len);
+
+        let new_path = match file.extension().and_then(|s| s.to_str()) {
+            Some(ext) if !ext.is_empty() => {
+                let ext_name = if args.upper_ext {
+                    ext.to_ascii_uppercase()
+                } else if args.low_ext {
+                    ext.to_ascii_lowercase()
+                } else {
+                    ext.to_string()
+                };
+                file.with_file_name(format!("{}.{}", new_name, ext_name))
+            }
+            _ => file.with_file_name(&new_name),
+        };
+
+        info!("Renamed {:?} to {:?}", file, new_path);
+        if let Err(err) = fs::rename(file, &new_path) {
+            error!(
+                "Failed to rename file {:?} to {:?}: {}",
+                file, new_path, err
+            );
         }
-
-        if path.is_dir() {
-            seq = 1;
-        }
-
-        if path.is_file() {
-            let new_name = format!("{:0width$}", seq, width = args.seq_len);
-            seq = seq + 1;
-
-            let new_path = match path.extension() {
-                Some(ext) => {
-                    let mut ext_name = ext.to_str().unwrap().to_string();
-                    if args.upper_ext {
-                        ext_name = ext_name.to_ascii_uppercase();
-                    }
-                    if args.low_ext {
-                        ext_name = ext_name.to_ascii_lowercase();
-                    }
-                    path.with_file_name(format!("{}.{}", &new_name, ext_name))
-                }
-                None => path.with_file_name(&new_name),
-            };
-
-            info!("Renamed {:?} to {:?}", path, new_path);
-            fs::rename(&path, &new_path).unwrap_or_else(|err| {
-                error!(
-                    "Failed to rename file {:?} to {:?}: {}",
-                    path, new_path, err
-                );
-            });
-        }
-    }
+    });
 
     Ok(())
-}
-
-fn is_ignore(path: &Path, _ignore: &Vec<String>) -> bool {
-    let name = path.file_name().unwrap().to_string_lossy();
-    if path.is_file() {
-        if name.starts_with(".") {
-            return true
-        }
-    }
-
-    if path.is_dir() {
-        if name.starts_with(".") {
-            return true
-        }
-    }
-
-    false
 }
