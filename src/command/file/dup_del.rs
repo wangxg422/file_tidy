@@ -1,15 +1,13 @@
 use crate::command::CommandExec;
 use crate::enumerate::file::FileHashType;
 use crate::error::Error;
+use crate::util::file::find_dup_files;
 use crate::util::hash::compute_file_hash;
 use clap::Args;
 use log::{error, info, warn};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::prelude::*;
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use walkdir::WalkDir;
 
 #[derive(Args)]
 pub struct DupDelArgs {
@@ -23,97 +21,151 @@ pub struct DupDelArgs {
         required = false
     )]
     pub recursive: bool,
+
+    #[arg(
+        short,
+        long,
+        help = "hash algorithm to compute the file digest: md5|sha1|sha256|sha3-224|sha3-256|sha3-384|sha3-512, default is sha3-256",
+        required = false,
+        default_value = "sha3-256"
+    )]
+    pub digest: FileHashType,
+
+    #[arg(
+        long,
+        help = "keep the specified files, default is all files",
+        required = false,
+        value_delimiter = ','
+    )]
+    pub protect: Option<Vec<PathBuf>>,
 }
 
 impl CommandExec for DupDelArgs {
     fn exec(&self) -> Result<(), Error> {
-        let hashes: Arc<Mutex<HashMap<Vec<u8>, PathBuf>>> = Arc::new(Mutex::new(HashMap::new()));
+        // 找到重复文件使用了hash算法，在删除时，用另一种hash算法校验是否仍一致
+        let second_digest = if self.digest == FileHashType::MD5 {
+            FileHashType::SHA1
+        } else {
+            FileHashType::MD5
+        };
 
-        let mut walkdir = WalkDir::new(&self.dir);
+        let protected_list = match &self.protect {
+            Some(list) => list.clone(),
+            None => vec![],
+        };
 
-        if !self.recursive {
-            walkdir = walkdir.max_depth(1);
-        }
+        let result = find_dup_files(&self.dir, self.recursive, &self.digest)?;
 
-        let entries: Vec<_> = walkdir
-            .into_iter()
-            .filter_entry(|e| {
-                // 目录或文件名不是隐藏的才进入
-                !e.file_name().to_string_lossy().starts_with('.')
-            })
-            .filter_map(|e| e.ok())
-            .filter(|e| e.file_type().is_file()) // 只要文件
-            .map(|e| e.path().to_path_buf())
-            .collect();
+        result.par_iter().for_each(|(hash, files)| {
+            info!(
+                "delete duplicates files ({}: {})",
+                self.digest,
+                hex::encode(hash)
+            );
 
-        entries.par_iter().for_each(|path| {
-            match compute_file_hash(path, &FileHashType::SHA3_256) {
-                Ok(hash) => {
-                    if let Ok(mut map) = hashes.lock() {
-                        if map.contains_key(&hash) {
-                            let file = map.get(&hash).unwrap();
-                            info!(
-                                "File {:?}(SHA3-256: {}) exist, delete it",
-                                file.display(),
-                                hex::encode(hash),
-                            );
-                            match delete_file(file, &path) {
-                                Ok(()) => info!("File {:?} successfully deleted", path.display()),
-                                Err(err) => error!("File {:?} error: {}", path.display(), err),
-                            }
-                        } else {
-                            map.insert(hash, path.to_path_buf());
+            let mut protected = Vec::new();
+            let mut not_protected = Vec::new();
+
+            for file in files {
+                if is_protectd(&protected_list, file) {
+                    protected.push(file.clone());
+                } else {
+                    not_protected.push(file.clone());
+                }
+            }
+
+            // 所有文件皆受保护，不删除文件
+            if not_protected.is_empty() {
+                info!("all files is in protected, no files to delete");
+                return;
+            }
+
+            // 所有文件都不受保护，保留一个文件，其余删除
+            if protected.is_empty() {
+                info!("all files is not in protected, keep one file and delete others");
+                for i in 1..not_protected.len() {
+                    match delete_file(
+                        &not_protected[0],
+                        &not_protected[i],
+                        &self.digest,
+                        &second_digest,
+                    ) {
+                        Ok(_) => {
+                            info!("file {} deleted", not_protected[i].display());
                         }
-                    } else {
-                        error!("Failed to acquire lock when processing: {}", path.display());
+                        Err(e) => {
+                            error!("delete file {} failed: {}", not_protected[i].display(), e);
+                        }
                     }
                 }
-                Err(err) => {
-                    error!("Failed to compute hash for {}: {}", path.display(), err);
+            } else {
+                // 既存在受保护文件，又存在不受保护文件，不受保护文件都删除
+                info!(
+                    "contains {} protected files, delete {} files that not in protected",
+                    protected.len(),
+                    not_protected.len()
+                );
+                for file in not_protected {
+                    match delete_file(&protected[0], &file, &self.digest, &second_digest) {
+                        Ok(_) => {
+                            info!("file {} deleted", file.display());
+                        }
+                        Err(e) => {
+                            error!("delete file {} failed: {}", file.display(), e);
+                        }
+                    }
                 }
             }
         });
 
-        info!("duplicates files delete finished");
+        info!("duplicates files deleted");
 
         Ok(())
     }
 }
 
-// delete file if sha3-256 and md5 is same
-fn delete_file(exist: &PathBuf, to_delete: &PathBuf) -> Result<(), Error> {
-    let hash_md5_exist = compute_file_hash(to_delete, &FileHashType::MD5).unwrap();
-    let hash_md5_delete = compute_file_hash(exist, &FileHashType::MD5).unwrap();
+fn is_protectd(protected_list: &Vec<PathBuf>, file: &PathBuf) -> bool {
+    for protected in protected_list {
+        if file.starts_with(protected) {
+            return true;
+        }
+    }
+    false
+}
 
-    if hash_md5_exist == hash_md5_delete {
+// delete file if sha3-256 and md5 is same
+fn delete_file(
+    exist: &PathBuf,
+    to_delete: &PathBuf,
+    digest: &FileHashType,
+    digest2: &FileHashType,
+) -> Result<(), Error> {
+    let hash_exist = compute_file_hash(to_delete, &FileHashType::MD5)?;
+    let hash_delete = compute_file_hash(exist, &FileHashType::MD5)?;
+
+    if hash_exist == hash_delete {
         match std::fs::remove_file(to_delete) {
-            Ok(_) => {
-                info!("File {} deleted", to_delete.display());
-                Ok(())
-            }
-            Err(err) => {
-                error!("Error delete file {:?}:{:?}", to_delete, err);
-                Err(Error::CustomError(format!(
-                    "Failed to delete file {:?}: {}",
-                    to_delete, err
-                )))
-            }
+            Ok(_) => Ok(()),
+            Err(err) => Err(Error::CustomError(format!(
+                "delete file {:?} failed: {}",
+                to_delete, err
+            ))),
         }
     } else {
         warn!(
-            "Files:\n\
-    - {:?} (MD5: {})\n\
-    - {:?} (MD5: {})\n\
-    are the same in SHA3-256, but different in MD5.",
+            "files[path: {:?}, {}: {}] and file[path: {:?}, {}: {}] are the same in {}, but different in {}",
             exist,
-            hex::encode(hash_md5_exist),
+            digest2,
+            hex::encode(hash_exist),
             to_delete,
-            hex::encode(hash_md5_delete)
+            digest2,
+            hex::encode(hash_delete),
+            digest,
+            digest2
         );
         Err(Error::CustomError(format!(
-            "File {} and {} are the same in SHA3-256, but different in MD5",
-            exist.display(),
-            to_delete.display()
+            "file {:?} and {:?} are the same in {}, but different in {}",
+            exist, to_delete, digest, digest2
         )))
     }
 }

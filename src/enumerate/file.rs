@@ -2,7 +2,7 @@ use std::fmt;
 
 use clap::ValueEnum;
 
-#[derive(Copy, Clone, Debug, ValueEnum)]
+#[derive(Copy, Clone, Debug, ValueEnum, PartialEq)]
 pub enum FileHashType {
     MD5,    // 128bit
     SHA1,   // 160bit
