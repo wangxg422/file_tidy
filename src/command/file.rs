@@ -31,7 +31,7 @@ impl FileCommand {
 
 #[derive(Args)]
 pub struct DupListArgs {
-    #[arg(short, long, help = "path of files", required = true)]
+    #[arg(long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
     #[arg(
@@ -54,14 +54,15 @@ pub struct DupListArgs {
         short,
         long,
         help = "hash algorithm to compute the file digest: md5|sha1|sha256|sha3-224|sha3-256|sha3-384|sha3-512, default is sha3-256",
-        required = false
+        required = false,
+        default_value = "sha3-256"
     )]
     pub digest: FileHashType,
 }
 
 #[derive(Args)]
 pub struct DupDelArgs {
-    #[arg(short, long, help = "path of files", required = true)]
+    #[arg(long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
     #[arg(
@@ -75,7 +76,7 @@ pub struct DupDelArgs {
 
 #[derive(Args)]
 pub struct RenameArgs {
-    #[arg(short, long, help = "path of files", required = true)]
+    #[arg(long, help = "path of files", required = true)]
     pub dir: PathBuf,
 
     /// Naming rule to apply (choose one)

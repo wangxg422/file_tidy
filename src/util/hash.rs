@@ -9,8 +9,8 @@ use sha3::{Sha3_224, Sha3_256, Sha3_384, Sha3_512};
 use crate::enumerate::file::FileHashType;
 use crate::error::Error;
 
-pub fn compute_file_hash(path: &Path, hash_type: &FileHashType) -> Result<Vec<u8>, Error> {
-    let mut hasher: Box<dyn DynDigest> = match hash_type {
+pub fn compute_file_hash(path: &Path, digest: &FileHashType) -> Result<Vec<u8>, Error> {
+    let mut hasher: Box<dyn DynDigest> = match digest {
         FileHashType::MD5 => Box::new(Md5::new()),
         FileHashType::SHA1 => Box::new(Sha1::new()),
         FileHashType::SHA256 => Box::new(Sha256::new()),

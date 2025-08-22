@@ -1,5 +1,4 @@
 use crate::command::file::DupListArgs;
-use crate::enumerate::file::FileHashType;
 use crate::error::Error;
 use crate::util::hash::compute_file_hash;
 use log::{info, warn};
@@ -29,7 +28,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
         .map(|e| e.path().to_path_buf())
         .collect();
 
-    // 按照文件大小分组,文件大小不同，一定不是同一文件,只有文件大小相同的文件才可能是同一文件
+    // 按照文件大小分组，文件大小不同，一定不是同一文件,只有文件大小相同的文件才可能是同一文件
     let mut size_groups: BTreeMap<u64, Vec<PathBuf>> = BTreeMap::new();
     for path in entries {
         if let Ok(meta) = fs::metadata(&path) {
@@ -45,7 +44,7 @@ pub fn handle(args: &DupListArgs) -> Result<(), Error> {
         .map(|(_, files)| {
             let mut map: BTreeMap<Vec<u8>, Vec<PathBuf>> = BTreeMap::new();
             for file in files {
-                if let Ok(h) = compute_file_hash(&file, &FileHashType::SHA3_256) {
+                if let Ok(h) = compute_file_hash(&file, &args.digest) {
                     map.entry(h).or_insert_with(|| Vec::new()).push(file);
                 } else {
                     warn!("Failed to compute hash for file {}", file.display());
