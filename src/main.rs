@@ -1,7 +1,6 @@
 mod command;
 mod enumerate;
 mod error;
-mod handle;
 mod util;
 
 use crate::command::Commands;
