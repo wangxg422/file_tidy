@@ -105,15 +105,19 @@ impl CommandExec for DupListArgs {
             .collect();
 
         if let Some(output) = &self.output {
-            save_duplicates_to_file(&self.dir, output, &result);
+            save_duplicates_to_file(&self.dir, output, &result, &self.digest);
         } else {
-            print_duplicates(&self.dir, result)
+            print_duplicates(&self.dir, result, &self.digest)
         }
         Ok(())
     }
 }
 
-fn print_duplicates(path: &PathBuf, hashes: BTreeMap<Vec<u8>, Vec<PathBuf>>) {
+fn print_duplicates(
+    path: &PathBuf,
+    hashes: BTreeMap<Vec<u8>, Vec<PathBuf>>,
+    digest: &FileHashType,
+) {
     info!(
         "duplicate files found in {}:\n",
         path.as_os_str().to_str().unwrap()
@@ -121,7 +125,7 @@ fn print_duplicates(path: &PathBuf, hashes: BTreeMap<Vec<u8>, Vec<PathBuf>>) {
 
     for (hash, paths) in hashes.iter() {
         if paths.len() > 1 {
-            println!("duplicate files (sha3-256: {})", hex::encode(hash));
+            println!("duplicate files ({}: {})", digest, hex::encode(hash));
             for path in paths {
                 println!("    - {}", path.display());
             }
@@ -130,7 +134,12 @@ fn print_duplicates(path: &PathBuf, hashes: BTreeMap<Vec<u8>, Vec<PathBuf>>) {
     }
 }
 
-fn save_duplicates_to_file(path: &PathBuf, output: &str, hashes: &BTreeMap<Vec<u8>, Vec<PathBuf>>) {
+fn save_duplicates_to_file(
+    path: &PathBuf,
+    output: &str,
+    hashes: &BTreeMap<Vec<u8>, Vec<PathBuf>>,
+    digest: &FileHashType,
+) {
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
@@ -150,7 +159,7 @@ fn save_duplicates_to_file(path: &PathBuf, output: &str, hashes: &BTreeMap<Vec<u
     for (hash, paths) in hashes.iter() {
         if paths.len() > 1 {
             file.write_all(
-                format!("duplicate files (sha3-256: {}\n)", hex::encode(hash)).as_bytes(),
+                format!("duplicate files ({}: {})\n", digest, hex::encode(hash)).as_bytes(),
             )
             .expect("write to file failed");
 
