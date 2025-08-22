@@ -1,3 +1,4 @@
+use crate::command::CommandExec;
 use crate::enumerate::file::FileHashType::{
     MD5, SHA1, SHA3_224, SHA3_256, SHA3_384, SHA3_512, SHA256,
 };
@@ -142,8 +143,8 @@ pub struct SeqSortArgs {
     pub desc: bool,
 }
 
-impl RenameArgs {
-    pub fn exec(&self) -> Result<(), Error> {
+impl CommandExec for RenameArgs {
+    fn exec(&self) -> Result<(), Error> {
         if !self.dir.exists() {
             error!("path does not exist: {}", self.dir.display());
             return Err(Error::CustomError(format!(
@@ -237,7 +238,9 @@ impl RenameArgs {
         info!("file renamed finished");
         Ok(())
     }
+}
 
+impl RenameArgs {
     fn rename_by_seq(&self) -> Result<(), Error> {
         let mut entries: Vec<_> = WalkDir::new(&self.dir)
             .max_depth(1)

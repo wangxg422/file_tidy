@@ -10,6 +10,7 @@ use log4rs::append::console::{ConsoleAppender, Target};
 use log4rs::Config;
 use log4rs::config::{Appender, Root};
 use log4rs::encode::pattern::PatternEncoder;
+use crate::command::CommandExec;
 
 #[derive(Parser)]
 #[command(name = "file-tidy", version = "v0.1.0", about = "A cli sample")]

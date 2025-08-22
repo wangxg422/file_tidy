@@ -3,7 +3,7 @@ pub mod dup_list;
 pub mod rename;
 
 use crate::{
-    command::file::{dup_del::DupDelArgs, dup_list::DupListArgs, rename::RenameArgs},
+    command::{file::{dup_del::DupDelArgs, dup_list::DupListArgs, rename::RenameArgs}, CommandExec},
     error::Error,
 };
 use clap::Subcommand;
@@ -23,8 +23,8 @@ pub enum FileCommand {
     Rename(RenameArgs), 
 }
 
-impl FileCommand {
-    pub fn exec(&self) -> Result<(), Error> {
+impl CommandExec for FileCommand {
+    fn exec(&self) -> Result<(), Error> {
         match self {
             FileCommand::DupList(args) => args.exec(),
             FileCommand::DupDel(args) => args.exec(),

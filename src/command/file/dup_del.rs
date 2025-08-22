@@ -1,3 +1,4 @@
+use crate::command::CommandExec;
 use crate::enumerate::file::FileHashType;
 use crate::error::Error;
 use crate::util::hash::compute_file_hash;
@@ -24,8 +25,8 @@ pub struct DupDelArgs {
     pub recursive: bool,
 }
 
-impl DupDelArgs {
-    pub fn exec(&self) -> Result<(), Error> {
+impl CommandExec for DupDelArgs {
+    fn exec(&self) -> Result<(), Error> {
         let hashes: Arc<Mutex<HashMap<Vec<u8>, PathBuf>>> = Arc::new(Mutex::new(HashMap::new()));
 
         let mut walkdir = WalkDir::new(&self.dir);

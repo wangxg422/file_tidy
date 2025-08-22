@@ -1,3 +1,4 @@
+use crate::command::CommandExec;
 use crate::enumerate::file::FileHashType;
 use crate::error::Error;
 use crate::util::hash::compute_file_hash;
@@ -42,8 +43,8 @@ pub struct DupListArgs {
     pub digest: FileHashType,
 }
 
-impl DupListArgs {
-    pub fn exec(&self) -> Result<(), Error> {
+impl CommandExec for DupListArgs {
+    fn exec(&self) -> Result<(), Error> {
         let mut walkdir = WalkDir::new(&self.dir);
 
         if !self.recursive {
