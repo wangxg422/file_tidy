@@ -43,7 +43,7 @@ pub struct RenameArgs {
 
     #[arg(
         long = "seq-len",
-        help = "length of sequence, default 6",
+        help = "length of sequence",
         required = false,
         default_value = "6"
     )]
@@ -118,7 +118,7 @@ pub struct NamingRuleArgs {
 pub struct SeqSortArgs {
     #[arg(
         long = "sort",
-        help = "sort of file when rename file by sequence, one of name|size|time, default is name",
+        help = "sort of file when rename file by sequence",
         required = false,
         default_value = "name"
     )]
@@ -126,7 +126,7 @@ pub struct SeqSortArgs {
 
     #[arg(
         long = "asc",
-        help = "if `--sort` is setted, set asc to ",
+        help = "if `--sort` is setted, asc for ascending order",
         required = false,
         requires = "sort",
         group = "rename-seq-sort"
@@ -135,7 +135,7 @@ pub struct SeqSortArgs {
 
     #[arg(
         long = "desc",
-        help = "if `--sort` is setted, set desc to ",
+        help = "if `--sort` is setted, desc for descending order",
         required = false,
         requires = "sort",
         group = "rename-seq-sort"
