@@ -25,7 +25,7 @@ pub struct DupDelArgs {
     #[arg(
         short,
         long,
-        help = "hash algorithm to compute the file digest: md5|sha1|sha256|sha3-224|sha3-256|sha3-384|sha3-512, default is sha3-256",
+        help = "hash algorithm to compute the file digest",
         required = false,
         default_value = "sha3-256"
     )]
@@ -42,6 +42,8 @@ pub struct DupDelArgs {
 
 impl CommandExec for DupDelArgs {
     fn exec(&self) -> Result<(), Error> {
+        info!("protected files: {:?}", self.protect);
+
         // 找到重复文件使用了hash算法，在删除时，用另一种hash算法校验是否仍一致
         let second_digest = if self.digest == FileHashType::MD5 {
             FileHashType::SHA1
@@ -55,6 +57,8 @@ impl CommandExec for DupDelArgs {
         };
 
         let result = find_dup_files(&self.dir, self.recursive, &self.digest)?;
+
+        info!("duplicate files check finished, there are {} duplicate files", result.len());
 
         result.par_iter().for_each(|(hash, files)| {
             info!(

@@ -33,7 +33,7 @@ pub struct DupListArgs {
     #[arg(
         short,
         long,
-        help = "hash algorithm to compute the file digest: md5|sha1|sha256|sha3-224|sha3-256|sha3-384|sha3-512, default is sha3-256",
+        help = "hash algorithm to compute the file digest",
         required = false,
         default_value = "sha3-256"
     )]
@@ -43,6 +43,8 @@ pub struct DupListArgs {
 impl CommandExec for DupListArgs {
     fn exec(&self) -> Result<(), Error> {
         let result = find_dup_files(&self.dir, self.recursive, &self.digest)?;
+
+        info!("duplicate files check finished, there are {} duplicate files", result.len());
 
         if let Some(output) = &self.output {
             save_duplicates_to_file(&self.dir, output, &result, &self.digest);
