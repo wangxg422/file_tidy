@@ -58,13 +58,17 @@ impl CommandExec for DupDelArgs {
 
         let result = find_dup_files(&self.dir, self.recursive, &self.digest)?;
 
-        info!("duplicate files check finished, there are {} duplicate files", result.len());
+        info!(
+            "duplicate files check finished, there are {} duplicate files",
+            result.len()
+        );
 
         result.par_iter().for_each(|(hash, files)| {
             info!(
-                "delete duplicates files ({}: {})",
+                "delete duplicates files ({}: {}) start, it has {} files",
                 self.digest,
-                hex::encode(hash)
+                hex::encode(hash),
+                files.len()
             );
 
             let mut protected = Vec::new();
@@ -120,6 +124,12 @@ impl CommandExec for DupDelArgs {
                     }
                 }
             }
+
+            info!(
+                "delete duplicates files ({}: {}) end",
+                self.digest,
+                hex::encode(hash)
+            );
         });
 
         info!("duplicates files deleted");
